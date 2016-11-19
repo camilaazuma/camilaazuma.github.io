@@ -21,46 +21,83 @@
 <body>
   <p>Press arrow keys to move<br/>
     Press space to pause</p>
+  <p id="score"></p>
   <canvas></canvas>
 
   <script type="text/javascript">
-    const setCanvas = function(){
-      const canvas = document.querySelector('canvas');
+    const size = 15;
+    let score = 0;
 
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+    const setCanvas = function(canvas){
+      canvas.width = Math.round(parseInt(window.innerWidth) / size) * size;
+      canvas.height = Math.round(parseInt(window.innerHeight) / size) * size;
       canvas.style.display = 'block';
 
       return canvas;
     };
 
-    const setContext = function(canvas, fillColor){
-      const context = canvas.getContext('2d');
-
-      context.fillStyle = fillColor;
+    const setContext = function(context, color){
+      context.fillStyle = color;
       context.lineWidth = .2;
 
       return context;
     };
 
-    const drawBlock = function(context, x, y){
+    const drawBlock = function(context, element){
       context.beginPath();
-      context.fillRect(x, y, 15, 15);
+      context.fillRect(element.x, element.y, size, size);
       context.closePath();
     };
 
-    const eraseBlock = function(context, x, y){
-      context.clearRect(x, y, 15, 15);
+    const eraseBlock = function(context, element){
+      context.clearRect(element.x, element.y, size, size);
+    };
+
+    const createApple = function(){
+      return {
+        x: Math.round(parseInt(Math.random() * window.innerWidth) / size) * size, 
+        y: Math.round(parseInt(Math.random() * window.innerHeight) / size) * size
+      }
+    };
+
+    const growSnake = function(snake, direction){
+      score++;
+      switch (direction) {
+        case 37:
+          snake.push({
+            x:snake[snake.length - 1].x - size,
+            y:snake[snake.length - 1].y
+          });
+          break;
+        case 38:
+          snake.push({
+            x:snake[snake.length - 1].x,
+            y:snake[snake.length - 1].y - size
+          });
+          break;
+        case 39:
+          snake.push({
+            x:snake[snake.length - 1].x + size,
+            y:snake[snake.length - 1].y
+          });
+          break;
+        case 40:
+          snake.push({
+            x:snake[snake.length - 1].x,
+            y:snake[snake.length - 1].y + size
+          });
+          break;
+      }
     };
 
     const advance = function(context, snake, direction){
       snake.map(function(e){
-        eraseBlock(context, e.x, e.y);
+        eraseBlock(context, e);
       });
       switch (direction) {
         case 37:
           snake.push({
-            x:snake[snake.length - 1].x - 10,
+            x:snake[snake.length - 1].x - size,
             y:snake[snake.length - 1].y
           });
           snake.shift();
@@ -68,13 +105,13 @@
         case 38:
           snake.push({
             x:snake[snake.length - 1].x,
-            y:snake[snake.length - 1].y - 10
+            y:snake[snake.length - 1].y - size
           });
           snake.shift();
           break;
         case 39:
           snake.push({
-            x:snake[snake.length - 1].x + 10,
+            x:snake[snake.length - 1].x + size,
             y:snake[snake.length - 1].y
           });
           snake.shift();
@@ -82,45 +119,15 @@
         case 40:
           snake.push({
             x:snake[snake.length - 1].x,
-            y:snake[snake.length - 1].y + 10
+            y:snake[snake.length - 1].y + size
           });
           snake.shift();
           break;
       }
 
       snake.map(function(e){
-        drawBlock(context, e.x, e.y);
+        drawBlock(context, e);
       });
-    };
-
-    const grow = function(snake, direction){
-      switch (direction) {
-        case 37:
-          snake.push({
-            x:snake[snake.length - 1].x - 10,
-            y:snake[snake.length - 1].y
-          });
-          break;
-        case 38:
-          snake.push({
-            x:snake[snake.length - 1].x,
-            y:snake[snake.length - 1].y - 10
-          });
-          break;
-        case 39:
-          snake.push({
-            x:snake[snake.length - 1].x + 10,
-            y:snake[snake.length - 1].y
-          });
-          break;
-        case 40:
-          snake.push({
-            x:snake[snake.length - 1].x,
-            y:snake[snake.length - 1].y + 10
-          });
-          break;
-      }
-      return snake;
     };
 
     const checkBorders = function(canvas, head){
@@ -132,82 +139,39 @@
       }
     };
 
-    const checkSelfCollision = function(snake){
-      body.map(function(e){
-        if(head === e){
-          console.log('collision')
-        }
-      })
-    };
-
-    const revertSnake = function(oldDirection, newDirection, snake){
-      if((oldDirection == 37 && newDirection == 39) || (oldDirection == 38 && newDirection == 40) ||
-        (oldDirection == 39 && newDirection == 37) || (oldDirection == 40 && newDirection == 38)){
-        snake.reverse();
-      }
-    };
-
-    const gameLoop = function(canvas, context, snake, direction, frameLength) {
+    const gameLoop = function(canvas, context, snake, apple, direction, speed) {
+      document.querySelector('#score').innerHTML = 'Score: ' + score;
       window.onkeydown = function(e){
-        revertSnake(direction, e.keyCode, snake);
         direction = e.keyCode;
       }
-      window.onclick = function(){
-        snake = grow(snake, direction);
+      drawBlock(context, apple);
+      if(snake[snake.length - 1].x == apple.x && snake[snake.length - 1].y == apple.y){
+        eraseBlock(context, apple);
+        apple = createApple();
+        growSnake(snake, direction);
       }
-      checkBorders(canvas, snake[snake.length - 1]);
-      //checkSelfCollision(snake);
       advance(context, snake, direction);
+      checkBorders(canvas, {x:snake[snake.length - 1].x, y:snake[snake.length - 1].y});
 
       setTimeout(function(){
-        gameLoop(canvas, context, snake, direction, frameLength);
-      }, frameLength); //do it all again 
+        gameLoop(canvas, context, snake, apple, direction, speed);
+      }, speed); //do it all again 
     };
 
-    const timer = function(callback, delay) {
-      let timerId, start, remaining = delay;
-
-      this.pause = function() {
-        window.clearTimeout(timerId);
-        remaining -= new Date() - start;
-      };
-
-      this.resume = function() {
-        start = new Date();
-        window.clearTimeout(timerId);
-        timerId = window.setTimeout(callback, remaining);
-      };
-      this.resume();
-    }
-
     window.onload = function() {
-      const 
-        canvas = setCanvas(),
-        context = setContext(canvas, '#fe57a1')
+      const canvas = setCanvas(document.querySelector('canvas'));
+      const context = setContext(canvas.getContext('2d'), '#fe57a1');
       let snake = [];
+      let apple = createApple();
+      let direction = 39;
 
+      //intial snake
       snake.push({
-        x:parseInt(Math.random() * window.innerWidth),
-        y:parseInt(Math.random() * window.innerHeight)
-      });
-      snake.push({
-        x:snake[snake.length - 1].x + 10,
-        y:snake[snake.length - 1].y + 10
-      });
-      snake.push({
-        x:snake[snake.length - 1].x + 10,
-        y:snake[snake.length - 1].y + 10
+        x: Math.round(parseInt(Math.random() * window.innerWidth) / size) * size, 
+        y: Math.round(parseInt(Math.random() * window.innerHeight) / size) * size
       });
 
-      timer(function() {
-        gameLoop(canvas, context, snake, 37, 100);
-      }, 1000);
-
-      window.onkeydown = function(e){
-        if(e.keyCode == 32){
-          timer.pause();
-        }
-      }
+      gameLoop(canvas, context, snake, apple, direction, 100);
     }
   </script>
 </body>
