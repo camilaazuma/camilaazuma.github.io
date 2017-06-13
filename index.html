@@ -1,34 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Camila Azuma</title>
-  <style type="text/css">
-    html, body {
-      background: #000;
-      color: #fff;
-    }
-    canvas{
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      left: 0;
-    }
-  </style>
+	<title>Hearts</title>
+	<style type="text/css">
+		html, body {
+		  background: #fff;
+		}
+		canvas{
+		  position: absolute;
+		  width: 100%;
+		  height: 100%;
+		  top: 0;
+		  right: 0;
+		  bottom: 0;
+		  left: 0;
+		}
+	</style>
 </head>
 <body>
-  <p>Press arrow keys to move<br/>
-    Press space to pause</p>
-  <p id="score"></p>
-  <canvas></canvas>
+	<canvas></canvas>
 
-  <script type="text/javascript">
-    const size = 15;
-    let score = 0;
-
-    const setCanvas = function(canvas){
+	<script type="text/javascript">
+		const size = 15;
+		const setCanvas = function(canvas){
       canvas.width = Math.round(parseInt(window.innerWidth) / size) * size;
       canvas.height = Math.round(parseInt(window.innerHeight) / size) * size;
       canvas.style.display = 'block';
@@ -37,142 +31,54 @@
     };
 
     const setContext = function(context, color){
-      context.fillStyle = color;
+      //context.fillStyle = color;
       context.lineWidth = .2;
 
       return context;
     };
 
-    const drawBlock = function(context, element){
-      context.beginPath();
-      context.fillRect(element.x, element.y, size, size);
-      context.closePath();
-    };
+		drawHeart = function(context, x, y, scale){
+			var r = scale;
+			context.fillStyle = '#' + Math.floor(Math.random() * 16777215).toString(16);
+		  // Exemplo de curvas de Bézier cúbicas
+		  context.beginPath();
+		  context.moveTo(x,y);
+		  context.bezierCurveTo(x,y-(3/r),x-(5/r),y-(15/r),x-(25/r),y-(15/r));
+		  context.bezierCurveTo(x-(55/r),y-(15/r),x-(55/r),y+(22.5/r),x-(55/r),y+(22.5/r));
+		  context.bezierCurveTo(x-(55/r),y+(40/r),x-(35/r),y+(62/r),x,y+(80/r));
+		  context.bezierCurveTo(x+(35/r),y+(62/r),x+(55/r),y+(40/r),x+(55/r),y+(22.5/r));
+		  context.bezierCurveTo(x+(55/r),y+(22.5/r),x+(55/r),y-(15/r),x+(25/r),y-(15/r));
+		  context.bezierCurveTo(x+(10/r),y-(15/r),x,y-(3/r),x,y);
+			context.closePath();
+		  context.fill();
 
-    const eraseBlock = function(context, element){
-      context.clearRect(element.x, element.y, size, size);
-    };
+	    //context.globalCompositeOperation = 'destination-out';
+				
+		};
 
-    const createApple = function(){
+		const generateHeart = function(){
       return {
         x: Math.round(parseInt(Math.random() * window.innerWidth) / size) * size, 
         y: Math.round(parseInt(Math.random() * window.innerHeight) / size) * size
       }
     };
 
-    const growSnake = function(snake, direction){
-      score++;
-      switch (direction) {
-        case 37:
-          snake.push({
-            x:snake[snake.length - 1].x - size,
-            y:snake[snake.length - 1].y
-          });
-          break;
-        case 38:
-          snake.push({
-            x:snake[snake.length - 1].x,
-            y:snake[snake.length - 1].y - size
-          });
-          break;
-        case 39:
-          snake.push({
-            x:snake[snake.length - 1].x + size,
-            y:snake[snake.length - 1].y
-          });
-          break;
-        case 40:
-          snake.push({
-            x:snake[snake.length - 1].x,
-            y:snake[snake.length - 1].y + size
-          });
-          break;
-      }
-    };
-
-    const advance = function(context, snake, direction){
-      snake.map(function(e){
-        eraseBlock(context, e);
-      });
-      switch (direction) {
-        case 37:
-          snake.push({
-            x:snake[snake.length - 1].x - size,
-            y:snake[snake.length - 1].y
-          });
-          snake.shift();
-          break;
-        case 38:
-          snake.push({
-            x:snake[snake.length - 1].x,
-            y:snake[snake.length - 1].y - size
-          });
-          snake.shift();
-          break;
-        case 39:
-          snake.push({
-            x:snake[snake.length - 1].x + size,
-            y:snake[snake.length - 1].y
-          });
-          snake.shift();
-          break;
-        case 40:
-          snake.push({
-            x:snake[snake.length - 1].x,
-            y:snake[snake.length - 1].y + size
-          });
-          snake.shift();
-          break;
-      }
-
-      snake.map(function(e){
-        drawBlock(context, e);
-      });
-    };
-
-    const checkBorders = function(canvas, head){
-      if((head.x + 15 >= canvas.width) || (head.x - 15 <= 0)){
-        console.log('ops')
-      }
-      if((head.y + 15 >= canvas.height) || (head.y - 15 <= 0)){
-        console.log('ops')
-      }
-    };
-
-    const gameLoop = function(canvas, context, snake, apple, direction, speed) {
-      document.querySelector('#score').innerHTML = 'Score: ' + score;
-      window.onkeydown = function(e){
-        direction = e.keyCode;
-      }
-      drawBlock(context, apple);
-      if(snake[snake.length - 1].x == apple.x && snake[snake.length - 1].y == apple.y){
-        eraseBlock(context, apple);
-        apple = createApple();
-        growSnake(snake, direction);
-      }
-      advance(context, snake, direction);
-      checkBorders(canvas, {x:snake[snake.length - 1].x, y:snake[snake.length - 1].y});
-
+		const loop = function(canvas, context) {
+			drawHeart(context, generateHeart().x, generateHeart().y, Math.random() * (10 - 0.5) + 0.5)
       setTimeout(function(){
-        gameLoop(canvas, context, snake, apple, direction, speed);
-      }, speed); //do it all again 
+        loop(canvas, context);
+      }, 50); //do it all again 
     };
 
-    window.onload = function() {
+
+		window.onload = function() {
       const canvas = setCanvas(document.querySelector('canvas'));
-      const context = setContext(canvas.getContext('2d'), '#fe57a1');
-      let snake = [];
-      let apple = createApple();
-      let direction = 39;
+      const context = setContext(canvas.getContext('2d'), '#fff');
 
-      //intial snake
-      snake.push({
-        x: Math.round(parseInt(Math.random() * window.innerWidth) / size) * size, 
-        y: Math.round(parseInt(Math.random() * window.innerHeight) / size) * size
-      });
+      loop(canvas, context);
 
-      gameLoop(canvas, context, snake, apple, direction, 100);
     }
-  </script>
+	</script>
+
 </body>
 </html>
