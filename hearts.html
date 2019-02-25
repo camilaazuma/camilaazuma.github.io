@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Hearts</title>
+	<style type="text/css">
+		html, body {
+		  background: #fff;
+		}
+		canvas{
+		  position: absolute;
+		  width: 100%;
+		  height: 100%;
+		  top: 0;
+		  right: 0;
+		  bottom: 0;
+		  left: 0;
+		}
+	</style>
+</head>
+<body>
+	<canvas></canvas>
+
+	<script type="text/javascript">
+		const size = 15;
+		const setCanvas = function(canvas){
+      canvas.width = Math.round(parseInt(window.innerWidth) / size) * size;
+      canvas.height = Math.round(parseInt(window.innerHeight) / size) * size;
+      canvas.style.display = 'block';
+
+      return canvas;
+    };
+
+    const setContext = function(context, color){
+      //context.fillStyle = color;
+      context.lineWidth = .2;
+
+      return context;
+    };
+
+		drawHeart = function(context, x, y, scale){
+			var r = scale;
+			context.fillStyle = '#' + Math.floor(Math.random() * 16777215).toString(16);
+		  // Exemplo de curvas de Bézier cúbicas
+		  context.beginPath();
+		  context.moveTo(x,y);
+		  context.bezierCurveTo(x,y-(3/r),x-(5/r),y-(15/r),x-(25/r),y-(15/r));
+		  context.bezierCurveTo(x-(55/r),y-(15/r),x-(55/r),y+(22.5/r),x-(55/r),y+(22.5/r));
+		  context.bezierCurveTo(x-(55/r),y+(40/r),x-(35/r),y+(62/r),x,y+(80/r));
+		  context.bezierCurveTo(x+(35/r),y+(62/r),x+(55/r),y+(40/r),x+(55/r),y+(22.5/r));
+		  context.bezierCurveTo(x+(55/r),y+(22.5/r),x+(55/r),y-(15/r),x+(25/r),y-(15/r));
+		  context.bezierCurveTo(x+(10/r),y-(15/r),x,y-(3/r),x,y);
+			context.closePath();
+		  context.fill();
+
+	    //context.globalCompositeOperation = 'destination-out';
+				
+		};
+
+		const generateHeart = function(){
+      return {
+        x: Math.round(parseInt(Math.random() * window.innerWidth) / size) * size, 
+        y: Math.round(parseInt(Math.random() * window.innerHeight) / size) * size
+      }
+    };
+
+		const loop = function(canvas, context) {
+			drawHeart(context, generateHeart().x, generateHeart().y, Math.random() * (10 - 0.5) + 0.5)
+      setTimeout(function(){
+        loop(canvas, context);
+      }, 50); //do it all again 
+    };
+
+
+		window.onload = function() {
+      const canvas = setCanvas(document.querySelector('canvas'));
+      const context = setContext(canvas.getContext('2d'), '#fff');
+
+      loop(canvas, context);
+
+    }
+	</script>
+
+</body>
+</html>
